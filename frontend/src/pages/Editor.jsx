@@ -3,22 +3,20 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from '../components/Button';
+import RichTextEditor from '../components/RichTextEditor';
 import { motion } from 'framer-motion';
 import { 
-    FileText, 
     Download, 
     ArrowLeft, 
     Sparkles, 
     LogOut, 
     Eye,
-    Edit3,
     FileDown,
     Moon,
     Sun
 } from 'lucide-react';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { saveAs } from 'file-saver';
-import ReactMarkdown from 'react-markdown';
 
 export default function Editor() {
     const location = useLocation();
@@ -47,7 +45,7 @@ export default function Editor() {
                 margin: [0.5, 0.5, 0.5, 0.5],
                 filename: 'document.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
             
@@ -59,80 +57,137 @@ export default function Editor() {
         }
     };
 
+    const parseHtmlToDocx = (html) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const children = [];
+
+        const processTextNode = (node) => {
+            const runs = [];
+            
+            const extractTextRuns = (element, styles = {}) => {
+                if (element.nodeType === Node.TEXT_NODE) {
+                    const text = element.textContent;
+                    if (text.trim()) {
+                        runs.push(new TextRun({
+                            text,
+                            bold: styles.bold || false,
+                            italics: styles.italic || false,
+                            underline: styles.underline ? {} : undefined,
+                        }));
+                    }
+                    return;
+                }
+
+                const newStyles = { ...styles };
+                const tagName = element.tagName?.toLowerCase();
+
+                if (tagName === 'strong' || tagName === 'b') newStyles.bold = true;
+                if (tagName === 'em' || tagName === 'i') newStyles.italic = true;
+                if (tagName === 'u') newStyles.underline = true;
+
+                for (const child of element.childNodes) {
+                    extractTextRuns(child, newStyles);
+                }
+            };
+
+            extractTextRuns(node);
+            return runs;
+        };
+
+        const processNode = (node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent?.trim();
+                if (text) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text })],
+                        spacing: { after: 80 }
+                    }));
+                }
+                return;
+            }
+
+            const tagName = node.tagName?.toLowerCase();
+
+            switch (tagName) {
+                case 'h1':
+                    children.push(new Paragraph({
+                        children: processTextNode(node),
+                        heading: HeadingLevel.HEADING_1,
+                        spacing: { after: 200 }
+                    }));
+                    break;
+                case 'h2':
+                    children.push(new Paragraph({
+                        children: processTextNode(node),
+                        heading: HeadingLevel.HEADING_2,
+                        spacing: { after: 150 }
+                    }));
+                    break;
+                case 'h3':
+                    children.push(new Paragraph({
+                        children: processTextNode(node),
+                        heading: HeadingLevel.HEADING_3,
+                        spacing: { after: 100 }
+                    }));
+                    break;
+                case 'p':
+                    children.push(new Paragraph({
+                        children: processTextNode(node),
+                        spacing: { after: 80 }
+                    }));
+                    break;
+                case 'ul':
+                    for (const li of node.querySelectorAll(':scope > li')) {
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: '• ' }),
+                                ...processTextNode(li)
+                            ],
+                            spacing: { after: 80 }
+                        }));
+                    }
+                    break;
+                case 'ol':
+                    let index = 1;
+                    for (const li of node.querySelectorAll(':scope > li')) {
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: `${index}. ` }),
+                                ...processTextNode(li)
+                            ],
+                            spacing: { after: 80 }
+                        }));
+                        index++;
+                    }
+                    break;
+                case 'br':
+                    children.push(new Paragraph({ text: '' }));
+                    break;
+                default:
+                    // Process children for container elements
+                    for (const child of node.childNodes) {
+                        processNode(child);
+                    }
+            }
+        };
+
+        for (const child of doc.body.childNodes) {
+            processNode(child);
+        }
+
+        return children;
+    };
+
     const downloadAsDOCX = async () => {
         setIsDownloading(true);
         try {
-            const lines = content.split('\n');
-            const children = [];
-            
-            lines.forEach((line) => {
-                if (line.startsWith('# ')) {
-                    children.push(
-                        new Paragraph({
-                            text: line.replace('# ', ''),
-                            heading: HeadingLevel.HEADING_1,
-                            spacing: { after: 200 }
-                        })
-                    );
-                } else if (line.startsWith('## ')) {
-                    children.push(
-                        new Paragraph({
-                            text: line.replace('## ', ''),
-                            heading: HeadingLevel.HEADING_2,
-                            spacing: { after: 150 }
-                        })
-                    );
-                } else if (line.startsWith('### ')) {
-                    children.push(
-                        new Paragraph({
-                            text: line.replace('### ', ''),
-                            heading: HeadingLevel.HEADING_3,
-                            spacing: { after: 100 }
-                        })
-                    );
-                } else if (line.startsWith('- ') || line.startsWith('* ')) {
-                    children.push(
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: '• ' + line.replace(/^[-*]\s/, '') })
-                            ],
-                            spacing: { after: 80 }
-                        })
-                    );
-                } else if (line.startsWith('**') && line.endsWith('**')) {
-                    children.push(
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: line.replace(/\*\*/g, ''), bold: true })
-                            ],
-                            spacing: { after: 100 }
-                        })
-                    );
-                } else if (line.trim() === '') {
-                    children.push(new Paragraph({ text: '' }));
-                } else {
-                    const processedRuns = [];
-                    const parts = line.split(/(\*\*[^*]+\*\*)/g);
-                    parts.forEach(part => {
-                        if (part.startsWith('**') && part.endsWith('**')) {
-                            processedRuns.push(new TextRun({ text: part.replace(/\*\*/g, ''), bold: true }));
-                        } else {
-                            processedRuns.push(new TextRun({ text: part }));
-                        }
-                    });
-                    children.push(
-                        new Paragraph({
-                            children: processedRuns,
-                            spacing: { after: 80 }
-                        })
-                    );
-                }
-            });
+            const docChildren = parseHtmlToDocx(content);
 
             const doc = new Document({
                 sections: [{
                     properties: {},
-                    children: children
+                    children: docChildren
                 }]
             });
 
@@ -146,20 +201,26 @@ export default function Editor() {
     };
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
-            <nav className={`border-b sticky top-0 z-10 backdrop-blur-sm transition-colors duration-300 ${isDark ? 'border-neutral-800 bg-neutral-950/80' : 'border-neutral-200 bg-white/80'}`}>
+        <div className={`h-screen overflow-hidden transition-colors duration-300 ${isDark ? 'bg-neutral-950' : 'bg-gradient-to-br from-neutral-50 via-white to-blue-50/30'}`}>
+            {isDark && (
+                <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-transparent pointer-events-none" />
+            )}
+            
+            <nav className={`border-b sticky top-0 z-10 backdrop-blur-md transition-colors duration-300 ${isDark ? 'border-neutral-800/50 glass' : 'border-neutral-200/50 bg-white/80'}`}>
                 <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
                         <div className="flex items-center gap-4">
                             <Button
                                 onClick={() => navigate('/generate')}
-                                className={isDark ? 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700' : 'bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300'}
+                                variant={isDark ? "ghost" : "default"}
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Back
                             </Button>
                             <div className="flex items-center gap-2">
-                                <Sparkles className={`h-6 w-6 ${isDark ? 'text-white' : 'text-neutral-900'}`} />
+                                <div className={`p-1.5 rounded-lg gradient-primary`}>
+                                    <Sparkles className="h-5 w-5 text-white" />
+                                </div>
                                 <span className={`text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>joby.ai</span>
                             </div>
                         </div>
@@ -167,7 +228,7 @@ export default function Editor() {
                             <Button
                                 onClick={downloadAsPDF}
                                 disabled={isDownloading}
-                                className={isDark ? 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700' : 'bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300'}
+                                variant={isDark ? "ghost" : "default"}
                             >
                                 <FileDown className="h-4 w-4 mr-2" />
                                 PDF
@@ -175,21 +236,21 @@ export default function Editor() {
                             <Button
                                 onClick={downloadAsDOCX}
                                 disabled={isDownloading}
-                                className={isDark ? '' : 'bg-neutral-900 text-white hover:bg-neutral-800'}
+                                variant="primary"
                             >
                                 <Download className="h-4 w-4 mr-2" />
                                 DOCX
                             </Button>
                             <button
                                 onClick={toggleTheme}
-                                className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-neutral-800 hover:bg-neutral-700 text-white' : 'bg-neutral-200 hover:bg-neutral-300 text-neutral-900'}`}
+                                className={`p-2 rounded-lg transition-all ${isDark ? 'bg-neutral-800/50 hover:bg-neutral-700 text-neutral-300 hover:text-white' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900'}`}
                             >
                                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                             </button>
-                            <span className={`ml-2 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>@{user?.username}</span>
+                            <span className={`text-sm ml-2 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>@{user?.username}</span>
                             <Button 
-                                onClick={logout} 
-                                className={isDark ? 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700' : 'bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300'}
+                                onClick={logout}
+                                variant={isDark ? "ghost" : "default"}
                             >
                                 <LogOut className="h-4 w-4" />
                             </Button>
@@ -198,56 +259,47 @@ export default function Editor() {
                 </div>
             </nav>
 
-            <main className="h-[calc(100vh-4rem)]">
-                <div className="grid grid-cols-2 h-full">
+            <main className="h-[calc(100vh-4rem)] overflow-hidden">
+                <div className="grid grid-cols-2 h-full overflow-hidden">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`border-r flex flex-col ${isDark ? 'border-neutral-800' : 'border-neutral-200'}`}
+                        className={`border-r flex flex-col overflow-hidden shadow-lg ${isDark ? 'border-neutral-800/50 bg-neutral-900/30' : 'border-neutral-200 bg-white'}`}
                     >
-                        <div className={`px-4 py-3 border-b flex items-center gap-2 ${isDark ? 'border-neutral-800 bg-neutral-900' : 'border-neutral-200 bg-white'}`}>
-                            <Edit3 className={`h-4 w-4 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`} />
-                            <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-neutral-900'}`}>Editor</span>
-                            <span className={`text-xs ml-auto ${isDark ? 'text-neutral-600' : 'text-neutral-500'}`}>Markdown supported</span>
-                        </div>
-                        <textarea
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            className={`flex-1 w-full p-6 font-mono text-sm leading-relaxed resize-none focus:outline-none transition-colors ${isDark ? 'bg-neutral-950 text-neutral-300' : 'bg-neutral-50 text-neutral-800'}`}
-                            placeholder="Edit your document here..."
-                            spellCheck="false"
+                        <RichTextEditor
+                            content={content}
+                            onUpdate={setContent}
+                            isDark={isDark}
                         />
                     </motion.div>
 
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`flex flex-col ${isDark ? 'bg-neutral-900' : 'bg-white'}`}
+                        className={`flex flex-col overflow-hidden shadow-lg ${isDark ? 'bg-neutral-900/30' : 'bg-white'}`}
                     >
-                        <div className={`px-4 py-3 border-b flex items-center gap-2 ${isDark ? 'border-neutral-800 bg-neutral-900' : 'border-neutral-200 bg-white'}`}>
-                            <Eye className={`h-4 w-4 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`} />
-                            <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-neutral-900'}`}>Preview</span>
+                        <div className={`px-4 h-12 border-b flex items-center gap-2 shrink-0 ${isDark ? 'border-neutral-800/50 bg-neutral-900/50' : 'border-neutral-200 bg-white'}`}>
+                            <Eye className={`h-4 w-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-neutral-900'}`}>Preview</span>
                         </div>
                         <div 
                             ref={previewRef}
-                            className="flex-1 p-6 overflow-auto bg-white"
+                            className="flex-1 p-8 overflow-auto bg-white shadow-inner"
                         >
-                            <div className="prose prose-sm max-w-none text-neutral-800">
-                                <ReactMarkdown
-                                    components={{
-                                        h1: ({children}) => <h1 className="text-2xl font-bold text-neutral-900 mb-4 border-b border-neutral-200 pb-2">{children}</h1>,
-                                        h2: ({children}) => <h2 className="text-xl font-semibold text-neutral-800 mt-6 mb-3">{children}</h2>,
-                                        h3: ({children}) => <h3 className="text-lg font-medium text-neutral-700 mt-4 mb-2">{children}</h3>,
-                                        p: ({children}) => <p className="text-neutral-700 mb-3 leading-relaxed">{children}</p>,
-                                        ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
-                                        li: ({children}) => <li className="text-neutral-700">{children}</li>,
-                                        strong: ({children}) => <strong className="font-semibold text-neutral-900">{children}</strong>,
-                                        hr: () => <hr className="my-4 border-neutral-300" />,
-                                    }}
-                                >
-                                    {content}
-                                </ReactMarkdown>
-                            </div>
+                            <div 
+                                className="prose prose-sm max-w-none text-neutral-800 
+                                    [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-neutral-900 [&_h1]:mb-4 [&_h1]:border-b [&_h1]:border-neutral-200 [&_h1]:pb-2
+                                    [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-neutral-800 [&_h2]:mt-6 [&_h2]:mb-3
+                                    [&_h3]:text-lg [&_h3]:font-medium [&_h3]:text-neutral-700 [&_h3]:mt-4 [&_h3]:mb-2
+                                    [&_p]:text-neutral-700 [&_p]:mb-3 [&_p]:leading-relaxed
+                                    [&_ul]:list-disc [&_ul]:list-inside [&_ul]:mb-4 [&_ul]:space-y-1
+                                    [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:mb-4 [&_ol]:space-y-1
+                                    [&_li]:text-neutral-700
+                                    [&_strong]:font-semibold [&_strong]:text-neutral-900
+                                    [&_em]:italic
+                                    [&_u]:underline"
+                                dangerouslySetInnerHTML={{ __html: content }}
+                            />
                         </div>
                     </motion.div>
                 </div>

@@ -35,49 +35,57 @@ export default function Signup() {
     const isDark = theme === 'dark';
 
     return (
-        <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${isDark ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
-            <div className={`absolute inset-0 ${isDark ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-800/20 via-transparent to-transparent' : ''}`} />
+        <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${isDark ? 'bg-neutral-950' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
+            <div className={`absolute inset-0 ${isDark ? 'bg-gradient-to-br from-blue-950/30 via-purple-950/20 to-transparent' : 'bg-gradient-to-br from-blue-100/20 via-purple-100/10 to-transparent'}`} />
             
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`relative p-8 rounded-2xl shadow-2xl w-full max-w-md transition-colors duration-300 ${isDark ? 'bg-neutral-900 border border-neutral-800' : 'bg-white border border-neutral-200'}`}
+                className={`relative p-10 rounded-2xl shadow-xl w-full max-w-md transition-all duration-300 backdrop-blur-sm ${isDark ? 'bg-neutral-900/80 border border-neutral-800/50' : 'bg-white/90 border border-neutral-200/50'}`}
             >
                 <div className="text-center mb-8">
-                    <h2 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>Create Account</h2>
-                    <p className={`mt-2 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>AI-powered resumes & cover letters that get you hired</p>
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-4 shadow-lg">
+                        <User className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className={`text-3xl font-bold tracking-tight mb-2 ${isDark ? 'text-white' : 'text-neutral-900'}`}>Create Account</h2>
+                    <p className={`text-base ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>AI-powered resumes & cover letters that get you hired</p>
                 </div>
 
                 {error && (
-                    <div className="bg-red-950/50 border border-red-900/50 text-red-300 p-3 rounded-lg mb-4 text-sm text-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 text-sm text-center flex items-center justify-center gap-2"
+                    >
+                        <span className="text-red-500">⚠</span>
                         {error}
-                    </div>
+                    </motion.div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
-                        <label className={`text-sm font-medium ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Full Name</label>
+                        <label className={`text-sm font-semibold ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Full Name</label>
                         <div className="relative">
-                            <User className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`} />
+                            <User className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                             <Input
                                 type="text"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
-                                className={`pl-10 ${isDark ? '' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500'}`}
+                                className={`pl-10 transition-all focus:ring-2 ${isDark ? 'focus:ring-blue-500/50' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 focus:ring-blue-500/20'}`}
                                 placeholder="John Doe"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className={`text-sm font-medium ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Username</label>
+                        <label className={`text-sm font-semibold ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Username</label>
                         <div className="relative">
-                            <AtSign className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`} />
+                            <AtSign className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                             <Input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className={`pl-10 ${isDark ? '' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500'}`}
+                                className={`pl-10 transition-all focus:ring-2 ${isDark ? 'focus:ring-blue-500/50' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 focus:ring-blue-500/20'}`}
                                 placeholder="johndoe"
                                 required
                                 minLength={3}
@@ -86,14 +94,14 @@ export default function Signup() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className={`text-sm font-medium ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Email</label>
+                        <label className={`text-sm font-semibold ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Email</label>
                         <div className="relative">
-                            <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`} />
+                            <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                             <Input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className={`pl-10 ${isDark ? '' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500'}`}
+                                className={`pl-10 transition-all focus:ring-2 ${isDark ? 'focus:ring-blue-500/50' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 focus:ring-blue-500/20'}`}
                                 placeholder="you@example.com"
                                 required
                             />
@@ -101,14 +109,14 @@ export default function Signup() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className={`text-sm font-medium ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Password</label>
+                        <label className={`text-sm font-semibold ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>Password</label>
                         <div className="relative">
-                            <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-neutral-500' : 'text-neutral-400'}`} />
+                            <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                             <Input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className={`pl-10 ${isDark ? '' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500'}`}
+                                className={`pl-10 transition-all focus:ring-2 ${isDark ? 'focus:ring-blue-500/50' : 'bg-neutral-50 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 focus:ring-blue-500/20'}`}
                                 placeholder="••••••••"
                                 required
                                 minLength={6}
@@ -118,16 +126,24 @@ export default function Signup() {
 
                     <Button 
                         type="submit" 
-                        className={`w-full h-11 text-base ${isDark ? '' : 'bg-neutral-900 text-white hover:bg-neutral-800'}`}
+                        variant="primary"
+                        className="w-full h-12 text-base font-semibold"
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Creating Account...' : 'Sign Up'}
+                        {isLoading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white/30 mr-2" />
+                                Creating Account...
+                            </>
+                        ) : (
+                            'Sign Up'
+                        )}
                     </Button>
                 </form>
 
-                <div className={`mt-6 text-center text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
+                <div className={`mt-8 text-center text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
                     Already have an account?{' '}
-                    <Link to="/login" className={`font-medium underline underline-offset-4 ${isDark ? 'text-white hover:text-neutral-300' : 'text-neutral-900 hover:text-neutral-600'}`}>
+                    <Link to="/login" className={`font-semibold gradient-text hover:opacity-80 transition-opacity`}>
                         Sign in
                     </Link>
                 </div>

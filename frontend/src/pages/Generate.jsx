@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Send, Sparkles, LogOut, Copy, Check, Edit3, Moon, Sun } from 'lucide-react';
+import { FileText, Send, Sparkles, LogOut, Copy, Check, Edit3, Moon, Sun, Plus } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import { marked } from 'marked';
 
 export default function Generate() {
     const navigate = useNavigate();
@@ -32,22 +34,43 @@ export default function Generate() {
         
         try {
             const response = await generate(query);
-            setOutput(response.output);
+            if (response?.output) {
+                setOutput(response.output);
+            } else {
+                setError('No output received. Please try again.');
+            }
         } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to generate. Please try again.');
+            const errorMessage = 
+                err?.response?.data?.detail ||
+                err?.response?.data?.message ||
+                err?.message ||
+                'Failed to generate. Please try again.';
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleCopy = async () => {
-        await navigator.clipboard.writeText(output);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        try {
+            await navigator.clipboard.writeText(output);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
     };
 
     const handleEdit = () => {
-        navigate('/editor', { state: { content: output } });
+        // Convert markdown to HTML for the TipTap editor
+        const htmlContent = marked(output, { breaks: true });
+        navigate('/editor', { state: { content: htmlContent } });
+    };
+
+    const handleNewGeneration = () => {
+        setOutput('');
+        setQuery('');
+        setError('');
     };
 
     const examplePrompts = [
@@ -56,25 +79,32 @@ export default function Generate() {
     ];
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-neutral-950' : 'bg-neutral-100'}`}>
-            <nav className={`border-b sticky top-0 z-10 backdrop-blur-sm transition-colors duration-300 ${isDark ? 'border-neutral-800 bg-neutral-950/80' : 'border-neutral-200 bg-white/80'}`}>
+        <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-neutral-950' : 'bg-gradient-to-br from-neutral-50 via-white to-blue-50/30'}`}>
+            {/* Gradient Background Effect */}
+            {isDark && (
+                <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-transparent pointer-events-none" />
+            )}
+            
+            <nav className={`border-b sticky top-0 z-10 backdrop-blur-md transition-colors duration-300 ${isDark ? 'border-neutral-800/50 glass' : 'border-neutral-200/50 bg-white/80'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
                         <div className="flex items-center gap-2">
-                            <Sparkles className={`h-6 w-6 ${isDark ? 'text-white' : 'text-neutral-900'}`} />
+                            <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
+                                <Sparkles className="h-5 w-5 text-white" />
+                            </div>
                             <span className={`text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>joby.ai</span>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <span className={isDark ? 'text-neutral-400' : 'text-neutral-600'}>@{user?.username}</span>
+                        <div className="flex items-center gap-3">
+                            <span className={`text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>@{user?.username}</span>
                             <button
                                 onClick={toggleTheme}
-                                className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-neutral-800 hover:bg-neutral-700 text-white' : 'bg-neutral-200 hover:bg-neutral-300 text-neutral-900'}`}
+                                className={`p-2 rounded-lg transition-all ${isDark ? 'bg-neutral-800/50 hover:bg-neutral-700 text-neutral-300 hover:text-white' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900'}`}
                             >
                                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                             </button>
                             <Button 
-                                onClick={logout} 
-                                className={isDark ? 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700' : 'bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300'}
+                                onClick={logout}
+                                variant={isDark ? "ghost" : "default"}
                             >
                                 <LogOut className="h-4 w-4 mr-2" />
                                 Logout
@@ -84,85 +114,102 @@ export default function Generate() {
                 </div>
             </nav>
 
-            <main className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <main className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8 relative">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-8"
+                    className="text-center mb-12"
                 >
+                    <h1 className={`text-4xl font-bold mb-4 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
+                        Create <span className="gradient-text">Professional</span> Resumes & Cover Letters
+                    </h1>
                     <p className={`text-lg ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
-                        Create professional resumes & cover letters with AI
+                        Powered by AI to help you land your dream job
                     </p>
                 </motion.div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className={`rounded-2xl p-6 mb-6 transition-colors duration-300 ${isDark ? 'bg-neutral-900 border border-neutral-800' : 'bg-white border border-neutral-200'}`}
-                >
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-4">
-                            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
-                                <FileText className="inline h-4 w-4 mr-2" />
-                                Describe what you need
-                            </label>
-                            <textarea
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                className={`w-full h-40 px-4 py-3 rounded-xl resize-none transition-all focus:outline-none focus:ring-2 ${isDark ? 'bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-600 focus:ring-white/20 focus:border-neutral-600' : 'bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder-neutral-500 focus:ring-neutral-900/20 focus:border-neutral-400'}`}
-                                placeholder="Example: I need a resume for a Software Engineer role at Google. Requirements: 3+ years experience, Python, JavaScript. My details: Name: John Doe, Email: john@example.com, Phone: 123-456-7890, Skills: Python, JavaScript, React, Node.js, Experience: 4 years at Tech Corp as Full Stack Developer, Education: BS in Computer Science from MIT."
-                            />
-                        </div>
+                <AnimatePresence mode="wait">
+                    {!output && (
+                        <motion.div
+                            key="prompt-section"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ delay: 0.1 }}
+                            className={`rounded-2xl p-8 mb-8 transition-all duration-300 shadow-lg ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 backdrop-blur-sm' : 'bg-white border border-neutral-200 shadow-xl'}`}
+                        >
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-6">
+                                    <label className={`flex items-center gap-2 text-sm font-semibold mb-3 ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>
+                                        <FileText className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                                        Describe what you need
+                                    </label>
+                                    <textarea
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        className={`w-full h-40 px-4 py-3 rounded-xl resize-none transition-all focus:outline-none focus:ring-2 ${isDark ? 'bg-neutral-800/50 border border-neutral-700/50 text-white placeholder-neutral-500 focus:ring-blue-500/50 focus:border-blue-500/50' : 'bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder-neutral-400 focus:ring-blue-500/20 focus:border-blue-500'}`}
+                                        placeholder="Example: I need a resume for a Software Engineer role at Google. Requirements: 3+ years experience, Python, JavaScript. My details: Name: John Doe, Email: john@example.com, Phone: 123-456-7890, Skills: Python, JavaScript, React, Node.js, Experience: 4 years at Tech Corp as Full Stack Developer, Education: BS in Computer Science from MIT."
+                                    />
+                                </div>
 
-                        {error && (
-                            <div className="bg-red-950/50 border border-red-900/50 text-red-300 p-3 rounded-lg mb-4 text-sm">
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="flex justify-between items-center">
-                            <div className={`text-sm ${isDark ? 'text-neutral-600' : 'text-neutral-500'}`}>
-                                {query.length} characters
-                            </div>
-                            <Button
-                                type="submit"
-                                disabled={isLoading}
-                                className={`px-6 ${isDark ? '' : 'bg-neutral-900 text-white hover:bg-neutral-800'}`}
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <div className={`animate-spin rounded-full h-4 w-4 border-2 border-t-transparent mr-2 ${isDark ? 'border-neutral-900' : 'border-white'}`} />
-                                        Generating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send className="h-4 w-4 mr-2" />
-                                        Generate
-                                    </>
+                                {error && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 text-sm flex items-center gap-2"
+                                    >
+                                        <span className="text-red-500">⚠</span>
+                                        {error}
+                                    </motion.div>
                                 )}
-                            </Button>
-                        </div>
-                    </form>
-                </motion.div>
+
+                                <div className="flex justify-between items-center">
+                                    <div className={`text-sm font-medium ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>
+                                        {query.length} characters
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        disabled={isLoading}
+                                        className="px-8"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white/30 mr-2" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Send className="h-4 w-4 mr-2" />
+                                                Generate
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {!output && !isLoading && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="mb-6"
+                        className="mb-8"
                     >
-                        <p className={`text-sm mb-3 ${isDark ? 'text-neutral-500' : 'text-neutral-600'}`}>Try an example:</p>
+                        <p className={`text-sm font-semibold mb-4 ${isDark ? 'text-neutral-400' : 'text-neutral-700'}`}>Try an example:</p>
                         <div className="grid gap-3">
                             {examplePrompts.map((prompt, index) => (
-                                <button
+                                <motion.button
                                     key={index}
                                     onClick={() => setQuery(prompt)}
-                                    className={`text-left p-4 rounded-xl text-sm transition-all ${isDark ? 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:bg-neutral-800 hover:border-neutral-700' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:border-neutral-300'}`}
+                                    whileHover={{ scale: 1.01, y: -2 }}
+                                    whileTap={{ scale: 0.99 }}
+                                    className={`text-left p-4 rounded-xl text-sm transition-all shadow-sm ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 text-neutral-400 hover:bg-neutral-800/70 hover:border-blue-500/30 hover:shadow-md' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:border-blue-200 hover:shadow-md'}`}
                                 >
                                     {prompt.substring(0, 120)}...
-                                </button>
+                                </motion.button>
                             ))}
                         </div>
                     </motion.div>
@@ -174,17 +221,28 @@ export default function Generate() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className={`rounded-2xl p-6 transition-colors duration-300 ${isDark ? 'bg-neutral-900 border border-neutral-800' : 'bg-white border border-neutral-200'}`}
+                            className={`rounded-2xl p-8 transition-all duration-300 shadow-xl ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 backdrop-blur-sm' : 'bg-white border border-neutral-200'}`}
                         >
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className={`text-lg font-semibold flex items-center ${isDark ? 'text-white' : 'text-neutral-900'}`}>
-                                    <Sparkles className={`h-5 w-5 mr-2 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`} />
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
+                                    <div className="p-1.5 rounded-lg gradient-primary">
+                                        <Sparkles className="h-4 w-4 text-white" />
+                                    </div>
                                     Your Resume / Cover Letter
                                 </h2>
                                 <div className="flex gap-2">
                                     <Button
+                                        onClick={handleNewGeneration}
+                                        variant={isDark ? "ghost" : "default"}
+                                        className="text-sm"
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        New
+                                    </Button>
+                                    <Button
                                         onClick={handleCopy}
-                                        className={`text-sm ${isDark ? 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-neutral-300'}`}
+                                        variant={isDark ? "ghost" : "default"}
+                                        className="text-sm"
                                     >
                                         {copied ? (
                                             <>
@@ -200,16 +258,18 @@ export default function Generate() {
                                     </Button>
                                     <Button
                                         onClick={handleEdit}
-                                        className={`text-sm ${isDark ? '' : 'bg-neutral-900 text-white hover:bg-neutral-800'}`}
+                                        variant="primary"
+                                        className="text-sm"
                                     >
                                         <Edit3 className="h-4 w-4 mr-2" />
                                         Edit & Download
                                     </Button>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-xl p-6 overflow-auto max-h-[600px]">
+                            <div className="bg-white rounded-xl p-8 overflow-auto max-h-[600px] shadow-inner border border-neutral-100">
                                 <div className="prose prose-sm max-w-none">
                                     <ReactMarkdown
+                                        rehypePlugins={[rehypeRaw]}
                                         components={{
                                             h1: ({children}) => <h1 className="text-2xl font-bold text-neutral-900 mb-4 border-b border-neutral-200 pb-2">{children}</h1>,
                                             h2: ({children}) => <h2 className="text-xl font-semibold text-neutral-800 mt-6 mb-3">{children}</h2>,
