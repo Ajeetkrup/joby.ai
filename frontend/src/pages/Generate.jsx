@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Send, Sparkles, LogOut, Copy, Check, Edit3, Moon, Sun, Plus } from 'lucide-react';
+import { FileText, Send, Sparkles, LogOut, Copy, Check, Edit3, Moon, Sun, Plus, Menu, X, Home, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { marked } from 'marked';
@@ -18,6 +18,7 @@ export default function Generate() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [copied, setCopied] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const isDark = theme === 'dark';
 
@@ -85,16 +86,32 @@ export default function Generate() {
                 <div className="fixed inset-0 bg-gradient-to-br from-blue-950/20 via-purple-950/10 to-transparent pointer-events-none" />
             )}
             
-            <nav className={`border-b sticky top-0 z-10 backdrop-blur-md transition-colors duration-300 ${isDark ? 'border-neutral-800/50 glass' : 'border-neutral-200/50 bg-white/80'}`}>
+            <nav className={`border-b sticky top-0 z-20 backdrop-blur-md transition-colors duration-300 ${isDark ? 'border-neutral-800/50 glass' : 'border-neutral-200/50 bg-white/80'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16 items-center">
+                    <div className="flex justify-between h-14 sm:h-16 items-center">
+                        {/* Mobile: Logo + Breadcrumb */}
                         <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
-                                <Sparkles className="h-5 w-5 text-white" />
+                            <div className={`p-1.5 rounded-lg gradient-primary`}>
+                                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                             </div>
-                            <span className={`text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>joby.ai</span>
+                            <span className={`text-lg sm:text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>joby.ai</span>
+                            {/* Mobile Breadcrumb */}
+                            <div className={`hidden xs:flex sm:hidden items-center text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                                <ChevronRight className="h-4 w-4 mx-1" />
+                                <span className={`font-semibold ${isDark ? 'text-white' : 'text-neutral-900'}`}>Generate</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3">
+
+                        {/* Mobile: Menu button */}
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className={`sm:hidden p-2 rounded-lg transition-all ${isDark ? 'bg-neutral-800/50 hover:bg-neutral-700 text-neutral-300' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600'}`}
+                        >
+                            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        </button>
+
+                        {/* Desktop: Actions */}
+                        <div className="hidden sm:flex items-center gap-3">
                             <span className={`text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>@{user?.username}</span>
                             <button
                                 onClick={toggleTheme}
@@ -111,19 +128,48 @@ export default function Generate() {
                             </Button>
                         </div>
                     </div>
+
+                    {/* Mobile Menu Dropdown */}
+                    {mobileMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className={`sm:hidden py-4 border-t ${isDark ? 'border-neutral-800/50' : 'border-neutral-200/50'}`}
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className={`text-sm ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>@{user?.username}</span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={toggleTheme}
+                                        className={`p-2 rounded-lg transition-all ${isDark ? 'bg-neutral-800/50 hover:bg-neutral-700 text-neutral-300' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-600'}`}
+                                    >
+                                        {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                                    </button>
+                                    <Button 
+                                        onClick={logout}
+                                        variant={isDark ? "ghost" : "default"}
+                                    >
+                                        <LogOut className="h-4 w-4 mr-2" />
+                                        Logout
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
             </nav>
 
-            <main className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8 relative">
+            <main className="max-w-5xl mx-auto py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-12"
+                    className="text-center mb-6 sm:mb-12"
                 >
-                    <h1 className={`text-4xl font-bold mb-4 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
+                    <h1 className={`text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                         Create <span className="gradient-text">Professional</span> Resumes & Cover Letters
                     </h1>
-                    <p className={`text-lg ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
+                    <p className={`text-sm sm:text-lg ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
                         Powered by AI to help you land your dream job
                     </p>
                 </motion.div>
@@ -136,19 +182,19 @@ export default function Generate() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ delay: 0.1 }}
-                            className={`rounded-2xl p-8 mb-8 transition-all duration-300 shadow-lg ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 backdrop-blur-sm' : 'bg-white border border-neutral-200 shadow-xl'}`}
+                            className={`rounded-xl sm:rounded-2xl p-4 sm:p-8 mb-6 sm:mb-8 transition-all duration-300 shadow-lg ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 backdrop-blur-sm' : 'bg-white border border-neutral-200 shadow-xl'}`}
                         >
                             <form onSubmit={handleSubmit}>
-                                <div className="mb-6">
-                                    <label className={`flex items-center gap-2 text-sm font-semibold mb-3 ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>
-                                        <FileText className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                                <div className="mb-4 sm:mb-6">
+                                    <label className={`flex items-center gap-2 text-sm font-semibold mb-2 sm:mb-3 ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>
+                                        <FileText className={`h-4 w-4 sm:h-5 sm:w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                                         Describe what you need
                                     </label>
                                     <textarea
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
-                                        className={`w-full h-40 px-4 py-3 rounded-xl resize-none transition-all focus:outline-none focus:ring-2 ${isDark ? 'bg-neutral-800/50 border border-neutral-700/50 text-white placeholder-neutral-500 focus:ring-blue-500/50 focus:border-blue-500/50' : 'bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder-neutral-400 focus:ring-blue-500/20 focus:border-blue-500'}`}
-                                        placeholder="Example: I need a resume for a Software Engineer role at Google. Requirements: 3+ years experience, Python, JavaScript. My details: Name: John Doe, Email: john@example.com, Phone: 123-456-7890, Skills: Python, JavaScript, React, Node.js, Experience: 4 years at Tech Corp as Full Stack Developer, Education: BS in Computer Science from MIT."
+                                        className={`w-full h-32 sm:h-40 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl resize-none transition-all focus:outline-none focus:ring-2 ${isDark ? 'bg-neutral-800/50 border border-neutral-700/50 text-white placeholder-neutral-500 focus:ring-blue-500/50 focus:border-blue-500/50' : 'bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder-neutral-400 focus:ring-blue-500/20 focus:border-blue-500'}`}
+                                        placeholder="Example: I need a resume for a Software Engineer role at Google. Requirements: 3+ years experience, Python, JavaScript..."
                                     />
                                 </div>
 
@@ -156,22 +202,22 @@ export default function Generate() {
                                     <motion.div
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 text-sm flex items-center gap-2"
+                                        className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 text-xs sm:text-sm flex items-center gap-2"
                                     >
                                         <span className="text-red-500">⚠</span>
                                         {error}
                                     </motion.div>
                                 )}
 
-                                <div className="flex justify-between items-center">
-                                    <div className={`text-sm font-medium ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>
+                                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0">
+                                    <div className={`text-xs sm:text-sm font-medium ${isDark ? 'text-neutral-500' : 'text-neutral-500'}`}>
                                         {query.length} characters
                                     </div>
                                     <Button
                                         type="submit"
                                         variant="primary"
                                         disabled={isLoading}
-                                        className="px-8"
+                                        className="px-6 sm:px-8 w-full sm:w-auto"
                                     >
                                         {isLoading ? (
                                             <>
@@ -196,19 +242,19 @@ export default function Generate() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="mb-8"
+                        className="mb-6 sm:mb-8"
                     >
-                        <p className={`text-sm font-semibold mb-4 ${isDark ? 'text-neutral-400' : 'text-neutral-700'}`}>Try an example:</p>
-                        <div className="grid gap-3">
+                        <p className={`text-xs sm:text-sm font-semibold mb-3 sm:mb-4 ${isDark ? 'text-neutral-400' : 'text-neutral-700'}`}>Try an example:</p>
+                        <div className="grid gap-2 sm:gap-3">
                             {examplePrompts.map((prompt, index) => (
                                 <motion.button
                                     key={index}
                                     onClick={() => setQuery(prompt)}
                                     whileHover={{ scale: 1.01, y: -2 }}
                                     whileTap={{ scale: 0.99 }}
-                                    className={`text-left p-4 rounded-xl text-sm transition-all shadow-sm ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 text-neutral-400 hover:bg-neutral-800/70 hover:border-blue-500/30 hover:shadow-md' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:border-blue-200 hover:shadow-md'}`}
+                                    className={`text-left p-3 sm:p-4 rounded-xl text-xs sm:text-sm transition-all shadow-sm ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 text-neutral-400 hover:bg-neutral-800/70 hover:border-blue-500/30 hover:shadow-md' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:border-blue-200 hover:shadow-md'}`}
                                 >
-                                    {prompt.substring(0, 120)}...
+                                    {prompt.substring(0, 80)}...
                                 </motion.button>
                             ))}
                         </div>
@@ -221,62 +267,62 @@ export default function Generate() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className={`rounded-2xl p-8 transition-all duration-300 shadow-xl ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 backdrop-blur-sm' : 'bg-white border border-neutral-200'}`}
+                            className={`rounded-xl sm:rounded-2xl p-4 sm:p-8 transition-all duration-300 shadow-xl ${isDark ? 'bg-neutral-900/50 border border-neutral-800/50 backdrop-blur-sm' : 'bg-white border border-neutral-200'}`}
                         >
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
-                                    <div className="p-1.5 rounded-lg gradient-primary">
-                                        <Sparkles className="h-4 w-4 text-white" />
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-4 sm:mb-6">
+                                <h2 className={`text-lg sm:text-xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
+                                    <div className="p-1 sm:p-1.5 rounded-lg gradient-primary">
+                                        <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
                                     </div>
                                     Your Resume / Cover Letter
                                 </h2>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 w-full sm:w-auto">
                                     <Button
                                         onClick={handleNewGeneration}
                                         variant={isDark ? "ghost" : "default"}
-                                        className="text-sm"
+                                        className="text-xs sm:text-sm flex-1 sm:flex-none"
                                     >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        New
+                                        <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                        <span className="hidden xs:inline">New</span>
                                     </Button>
                                     <Button
                                         onClick={handleCopy}
                                         variant={isDark ? "ghost" : "default"}
-                                        className="text-sm"
+                                        className="text-xs sm:text-sm flex-1 sm:flex-none"
                                     >
                                         {copied ? (
                                             <>
-                                                <Check className="h-4 w-4 mr-2 text-green-500" />
-                                                Copied!
+                                                <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-green-500" />
+                                                <span className="hidden xs:inline">Copied!</span>
                                             </>
                                         ) : (
                                             <>
-                                                <Copy className="h-4 w-4 mr-2" />
-                                                Copy
+                                                <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                                <span className="hidden xs:inline">Copy</span>
                                             </>
                                         )}
                                     </Button>
                                     <Button
                                         onClick={handleEdit}
                                         variant="primary"
-                                        className="text-sm"
+                                        className="text-xs sm:text-sm flex-1 sm:flex-none"
                                     >
-                                        <Edit3 className="h-4 w-4 mr-2" />
-                                        Edit & Download
+                                        <Edit3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                        <span className="hidden xs:inline">Edit &</span> Download
                                     </Button>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-xl p-8 overflow-auto max-h-[600px] shadow-inner border border-neutral-100">
+                            <div className="bg-white rounded-xl p-4 sm:p-8 overflow-auto max-h-[400px] sm:max-h-[600px] shadow-inner border border-neutral-100">
                                 <div className="prose prose-sm max-w-none">
                                     <ReactMarkdown
                                         rehypePlugins={[rehypeRaw]}
                                         components={{
-                                            h1: ({children}) => <h1 className="text-2xl font-bold text-neutral-900 mb-4 border-b border-neutral-200 pb-2">{children}</h1>,
-                                            h2: ({children}) => <h2 className="text-xl font-semibold text-neutral-800 mt-6 mb-3">{children}</h2>,
-                                            h3: ({children}) => <h3 className="text-lg font-medium text-neutral-700 mt-4 mb-2">{children}</h3>,
-                                            p: ({children}) => <p className="text-neutral-700 mb-3 leading-relaxed">{children}</p>,
-                                            ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1 text-neutral-700">{children}</ul>,
-                                            ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-1 text-neutral-700">{children}</ol>,
+                                            h1: ({children}) => <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-4 border-b border-neutral-200 pb-2">{children}</h1>,
+                                            h2: ({children}) => <h2 className="text-lg sm:text-xl font-semibold text-neutral-800 mt-6 mb-3">{children}</h2>,
+                                            h3: ({children}) => <h3 className="text-base sm:text-lg font-medium text-neutral-700 mt-4 mb-2">{children}</h3>,
+                                            p: ({children}) => <p className="text-sm sm:text-base text-neutral-700 mb-3 leading-relaxed">{children}</p>,
+                                            ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-1 text-neutral-700 text-sm sm:text-base">{children}</ul>,
+                                            ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-1 text-neutral-700 text-sm sm:text-base">{children}</ol>,
                                             li: ({children}) => <li className="text-neutral-700">{children}</li>,
                                             strong: ({children}) => <strong className="font-semibold text-neutral-900">{children}</strong>,
                                             em: ({children}) => <em className="italic text-neutral-600">{children}</em>,

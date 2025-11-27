@@ -9,7 +9,7 @@ const MenuButton = ({ onClick, isActive, disabled, children, title, isDark }) =>
         onClick={onClick}
         disabled={disabled}
         title={title}
-        className={`p-2 rounded-lg transition-all ${
+        className={`p-1.5 md:p-2 rounded-lg transition-all ${
             isActive
                 ? isDark
                     ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
@@ -27,14 +27,14 @@ const Toolbar = ({ editor, isDark }) => {
     if (!editor) return null;
 
     return (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 md:gap-1 flex-wrap">
             <MenuButton
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 isActive={editor.isActive('bold')}
                 isDark={isDark}
                 title="Bold (Ctrl+B)"
             >
-                <Bold className="h-4 w-4" />
+                <Bold className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </MenuButton>
             <MenuButton
                 onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -42,7 +42,7 @@ const Toolbar = ({ editor, isDark }) => {
                 isDark={isDark}
                 title="Italic (Ctrl+I)"
             >
-                <Italic className="h-4 w-4" />
+                <Italic className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </MenuButton>
             <MenuButton
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
@@ -50,10 +50,10 @@ const Toolbar = ({ editor, isDark }) => {
                 isDark={isDark}
                 title="Underline (Ctrl+U)"
             >
-                <UnderlineIcon className="h-4 w-4" />
+                <UnderlineIcon className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </MenuButton>
             
-            <div className={`w-px h-4 mx-1 ${isDark ? 'bg-neutral-700' : 'bg-neutral-300'}`} />
+            <div className={`w-px h-4 mx-0.5 md:mx-1 ${isDark ? 'bg-neutral-700' : 'bg-neutral-300'}`} />
             
             <MenuButton
                 onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -61,7 +61,7 @@ const Toolbar = ({ editor, isDark }) => {
                 isDark={isDark}
                 title="Heading 1"
             >
-                <Heading1 className="h-4 w-4" />
+                <Heading1 className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </MenuButton>
             <MenuButton
                 onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -69,7 +69,7 @@ const Toolbar = ({ editor, isDark }) => {
                 isDark={isDark}
                 title="Heading 2"
             >
-                <Heading2 className="h-4 w-4" />
+                <Heading2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </MenuButton>
             <MenuButton
                 onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
@@ -77,10 +77,10 @@ const Toolbar = ({ editor, isDark }) => {
                 isDark={isDark}
                 title="Heading 3"
             >
-                <Heading3 className="h-4 w-4" />
+                <Heading3 className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </MenuButton>
             
-            <div className={`w-px h-4 mx-1 ${isDark ? 'bg-neutral-700' : 'bg-neutral-300'}`} />
+            <div className={`w-px h-4 mx-0.5 md:mx-1 ${isDark ? 'bg-neutral-700' : 'bg-neutral-300'}`} />
             
             <MenuButton
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -88,7 +88,7 @@ const Toolbar = ({ editor, isDark }) => {
                 isDark={isDark}
                 title="Bullet List"
             >
-                <List className="h-4 w-4" />
+                <List className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </MenuButton>
         </div>
     );
@@ -121,7 +121,7 @@ export default function RichTextEditor({ content, onUpdate, isDark }) {
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
-            <div className={`px-4 h-12 border-b flex items-center gap-2 shrink-0 ${
+            <div className={`px-2 md:px-4 h-10 md:h-12 border-b flex items-center gap-2 shrink-0 ${
                 isDark ? 'border-neutral-800/50 bg-neutral-900/50' : 'border-neutral-200 bg-white'
             }`}>
                 <Toolbar editor={editor} isDark={isDark} />
@@ -131,7 +131,7 @@ export default function RichTextEditor({ content, onUpdate, isDark }) {
             }`}>
                 <EditorContent 
                     editor={editor} 
-                    className="h-full"
+                    className="h-full [&_.tiptap]:p-3 [&_.tiptap]:md:p-6"
                 />
             </div>
         </div>

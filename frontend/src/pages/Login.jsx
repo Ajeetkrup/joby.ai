@@ -39,14 +39,14 @@ export default function Login() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`relative p-10 rounded-2xl shadow-xl w-full max-w-md transition-all duration-300 backdrop-blur-sm ${isDark ? 'bg-neutral-900/80 border border-neutral-800/50' : 'bg-white/90 border border-neutral-200/50'}`}
+                className={`relative p-6 sm:p-10 rounded-2xl shadow-xl w-full max-w-md transition-all duration-300 backdrop-blur-sm ${isDark ? 'bg-neutral-900/80 border border-neutral-800/50' : 'bg-white/90 border border-neutral-200/50'}`}
             >
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-4 shadow-lg">
-                        <Lock className="h-8 w-8 text-white" />
+                <div className="text-center mb-6 sm:mb-8">
+                    <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl gradient-primary mb-3 sm:mb-4 shadow-lg">
+                        <Lock className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                     </div>
-                    <h2 className={`text-3xl font-bold tracking-tight mb-2 ${isDark ? 'text-white' : 'text-neutral-900'}`}>Welcome Back</h2>
-                    <p className={`text-base ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>Generate resumes & cover letters in seconds</p>
+                    <h2 className={`text-2xl sm:text-3xl font-bold tracking-tight mb-2 ${isDark ? 'text-white' : 'text-neutral-900'}`}>Welcome Back</h2>
+                    <p className={`text-sm sm:text-base ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>Generate resumes & cover letters in seconds</p>
                 </div>
 
                 {error && (
