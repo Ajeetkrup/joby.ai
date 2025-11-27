@@ -214,5 +214,5 @@ MIT License
 
 ---
 
-Built with ❤️ using Ajeet Upadhyay
+Built with ❤️ by Ajeet Upadhyay
 
