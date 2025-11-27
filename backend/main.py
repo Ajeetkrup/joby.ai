@@ -33,8 +33,9 @@ def read_root():
 
 # CORS
 origins = [
-    "http://localhost:5173", # Vite default
+    "http://localhost:5173",  # Vite default
     "http://localhost:3000",
+    "https://joby-ai.vercel.app",  # Production frontend
 ]
 
 app.add_middleware(
